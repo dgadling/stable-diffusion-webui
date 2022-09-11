@@ -40,5 +40,11 @@ def txt2img(prompt: str, negative_prompt: str, prompt_style: str, steps: int, sa
 
     shared.total_tqdm.clear()
 
-    return processed.images, processed.js(), plaintext_to_html(processed.info)
+    if opts.machine_friendly_pnginfo:
+        processed_info_text = ", ".join([k if k == v else f'{k}: {v}' for k, v in
+                                            processed.info.items() if v is not None])
+    else:
+        processed_info_text = processed.info
+
+    return processed.images, processed.js(), plaintext_to_html(processed_info_text)
 

@@ -256,7 +256,11 @@ def save_image(image, path, basename, seed=None, prompt=None, extension='png', i
 
     if extension == 'png' and opts.enable_pnginfo and info is not None:
         pnginfo = PngImagePlugin.PngInfo()
-        pnginfo.add_text(pnginfo_section_name, info)
+        if opts.machine_friendly_pnginfo:
+            for k, v in info.items():
+                pnginfo.add_text(k.lower(), str(v))
+        else:
+            pnginfo.add_text(pnginfo_section_name, info)
     else:
         pnginfo = None
 

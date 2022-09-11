@@ -188,25 +188,43 @@ def process_images(p: StableDiffusionProcessing) -> Processed:
     def infotext(iteration=0, position_in_batch=0):
         index = position_in_batch + iteration * p.batch_size
 
-        generation_params = {
-            "Steps": p.steps,
-            "Sampler": samplers[p.sampler_index].name,
-            "CFG scale": p.cfg_scale,
-            "Seed": all_seeds[index],
-            "Face restoration": (opts.face_restoration_model if p.restore_faces else None),
-            "Size": f"{p.width}x{p.height}",
-            "Batch size": (None if p.batch_size < 2 else p.batch_size),
-            "Batch pos": (None if p.batch_size < 2 else position_in_batch),
-            "Variation seed": (None if p.subseed_strength == 0 else all_subseeds[index]),
-            "Variation seed strength": (None if p.subseed_strength == 0 else p.subseed_strength),
-            "Seed resize from": (None if p.seed_resize_from_w == 0 or p.seed_resize_from_h == 0 else f"{p.seed_resize_from_w}x{p.seed_resize_from_h}"),
-        }
+        if opts.machine_friendly_pnginfo:
+            generation_params = {
+                "sd_prompt": all_prompts[index],
+                "sd_negative_prompt": (p.negative_prompt if p.negative_prompt else "None"),
+                "sd_steps": p.steps,
+                "sd_sampler": samplers[p.sampler_index].name,
+                "sd_sampler_index": p.sampler_index,
+                "sd_cfg_scale": p.cfg_scale,
+                "sd_seed": all_seeds[index],
+                "sd_restore_faces": p.restore_faces,
+                "sd_face_restoration_model": opts.face_restoration_model,
+                "sd_width": p.width,
+                "sd_height": p.height,
+            }
+        else:
+            generation_params = {
+                "Steps": p.steps,
+                "Sampler": samplers[p.sampler_index].name,
+                "CFG scale": p.cfg_scale,
+                "Seed": all_seeds[index],
+                "Face restoration": (opts.face_restoration_model if p.restore_faces else None),
+                "Size": f"{p.width}x{p.height}",
+                "Batch size": (None if p.batch_size < 2 else p.batch_size),
+                "Batch pos": (None if p.batch_size < 2 else position_in_batch),
+                "Variation seed": (None if p.subseed_strength == 0 else all_subseeds[index]),
+                "Variation seed strength": (None if p.subseed_strength == 0 else p.subseed_strength),
+                "Seed resize from": (None if p.seed_resize_from_w == 0 or p.seed_resize_from_h == 0 else f"{p.seed_resize_from_w}x{p.seed_resize_from_h}"),
+            }
 
         if p.extra_generation_params is not None:
             generation_params.update(p.extra_generation_params)
 
+        if opts.machine_friendly_pnginfo:
+            return generation_params
+
         generation_params_text = ", ".join([k if k == v else f'{k}: {v}' for k, v in generation_params.items() if v is not None])
-        
+
         negative_prompt_text = "\nNegative prompt: " + p.negative_prompt if p.negative_prompt else ""
 
         return f"{all_prompts[index]}{negative_prompt_text}\n{generation_params_text}".strip() + "".join(["\n\n" + x for x in comments])
